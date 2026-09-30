@@ -1,0 +1,22 @@
+# Docker Compose 部署专用配置（SPRING_PROFILES_ACTIVE=docker）。
+# 所有连接信息都从环境变量注入，由 docker-compose.yml 提供，不在镜像里写死任何地址或密钥。
+spring:
+  datasource:
+    # 容器内通过服务名 db 访问 MySQL；allowPublicKeyRetrieval 供 MySQL 8 首次握手取公钥。
+    url: ${OCTOGUIDE_DB_URL:jdbc:mysql://db:3306/octoguide?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${OCTOGUIDE_DB_USERNAME:octoguide}
+    password: ${OCTOGUIDE_DB_PASSWORD:}
+  flyway:
+    # 建表与初始化数据由 V1~V8 迁移脚本负责，容器首次启动时自动执行。
+    enabled: true
+    baseline-on-migrate: true
+
+octoguide:
+  llm:
+    # 地址与密钥由环境变量注入（OCTOGUIDE_LLM_BASE_URL / OCTOGUIDE_LLM_KEY / OCTOGUIDE_LLM_MODEL）。
+    base-url: ${OCTOGUIDE_LLM_BASE_URL:${OCTOGUIDE_LLM_URL:https://api.openai.com/v1}}
+    api-key: ${OCTOGUIDE_LLM_KEY:}
+    model: ${OCTOGUIDE_LLM_MODEL:gpt-4o-mini}
+  knowledge:
+    update:
+      token: ${OCTOGUIDE_KNOWLEDGE_UPDATE_TOKEN:}

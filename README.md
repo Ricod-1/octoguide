@@ -37,6 +37,25 @@ $env:JAVA_HOME='C:\Program Files\Java\jdk1.8.0_192'
 
 后端 API 为 `http://localhost:8080`。
 
+### 用 Docker Compose 一键部署（推荐）
+
+不依赖本机 JDK / Maven / Node / MySQL，一条命令拉起 MySQL + 后端 + 前端：
+
+```powershell
+copy .env.example .env      # 修改 MYSQL_ROOT_PASSWORD、OCTOGUIDE_DB_PASSWORD，按需填 LLM Key
+docker compose up -d --build
+# 浏览器打开 http://localhost:8088
+```
+
+- 前端 `8088`、后端 `127.0.0.1:8080`、MySQL `127.0.0.1:3307`（后两者只绑定本机）。
+- 数据库首次创建时自动执行 `db/init/01-schema.sql`（建表 + 种子数据 + Flyway 基线）。
+- 常用命令：`docker compose logs -f backend`、`docker compose down`、
+  `docker compose down -v`（连数据一起清空）。
+- 详见 [Docker 部署设计](docs/2026-10-07-Docker部署设计.md)。
+
+> 维护提示：`db/init/01-schema.sql` 由 Flyway 的 `V1`~`V8` 合并而来并写入基线 checksum。
+> **改动任一迁移脚本后必须同步更新该文件**，否则后端启动会报 `Migration checksum mismatch`。
+
 ## API
 
 - `GET /api/categories`
