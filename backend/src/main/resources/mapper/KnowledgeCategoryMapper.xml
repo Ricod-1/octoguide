@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.octoguide.knowledge.mapper.KnowledgeCategoryMapper">
+
+    <resultMap id="KnowledgeCategoryMap" type="com.octoguide.knowledge.domain.KnowledgeCategory">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="icon" column="icon"/>
+        <result property="description" column="description"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="enabled" column="enabled"/>
+        <result property="auto" column="is_auto"/>
+    </resultMap>
+
+    <select id="findEnabledCategories" resultMap="KnowledgeCategoryMap">
+        SELECT id, name, icon, description, sort_order, enabled, is_auto
+        FROM knowledge_category
+        WHERE enabled = TRUE
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <select id="findByName" parameterType="string" resultMap="KnowledgeCategoryMap">
+        SELECT id, name, icon, description, sort_order, enabled, is_auto
+        FROM knowledge_category
+        WHERE name = #{name}
+        LIMIT 1
+    </select>
+
+    <select id="countByAuto" resultType="long">
+        SELECT COUNT(*)
+        FROM knowledge_category
+        WHERE enabled = TRUE AND is_auto = #{isAuto}
+    </select>
+</mapper>

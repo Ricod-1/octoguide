@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.octoguide.knowledge.mapper.KnowledgeSourceMapper">
+
+    <resultMap id="KnowledgeSourceMap" type="com.octoguide.knowledge.domain.KnowledgeSource">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="url" column="url"/>
+        <result property="sourceType" column="source_type"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="tags" column="tags"/>
+        <result property="siteTitle" column="site_title"/>
+        <result property="enabled" column="enabled"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findEnabledSources" resultMap="KnowledgeSourceMap">
+        SELECT id, title, url, source_type, category_id, tags, site_title, enabled, updated_at
+        FROM knowledge_source
+        WHERE enabled = TRUE
+        ORDER BY id ASC
+    </select>
+
+    <select id="findById" parameterType="string" resultMap="KnowledgeSourceMap">
+        SELECT id, title, url, source_type, category_id, tags, site_title, enabled, updated_at
+        FROM knowledge_source
+        WHERE id = #{id}
+    </select>
+</mapper>

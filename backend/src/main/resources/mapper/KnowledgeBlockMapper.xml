@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.octoguide.knowledge.mapper.KnowledgeBlockMapper">
+
+    <resultMap id="KnowledgeBlockMap" type="com.octoguide.knowledge.domain.KnowledgeBlock">
+        <id property="id" column="id"/>
+        <result property="itemId" column="item_id"/>
+        <result property="blockType" column="block_type"/>
+        <result property="content" column="content"/>
+        <result property="sortOrder" column="sort_order"/>
+    </resultMap>
+
+    <select id="findByItemIds" resultMap="KnowledgeBlockMap">
+        SELECT id, item_id, block_type, content, sort_order
+        FROM knowledge_block
+        <choose>
+            <when test="itemIds != null and itemIds.size() > 0">
+                WHERE item_id IN
+                <foreach collection="itemIds" item="itemId" open="(" separator="," close=")">
+                    #{itemId}
+                </foreach>
+            </when>
+            <otherwise>
+                WHERE 1 = 0
+            </otherwise>
+        </choose>
+        ORDER BY item_id ASC, sort_order ASC, id ASC
+    </select>
+
+    <insert id="insert" parameterType="com.octoguide.knowledge.domain.KnowledgeBlock">
+        INSERT INTO knowledge_block (item_id, block_type, content, sort_order)
+        VALUES (#{itemId}, #{blockType}, #{content}, #{sortOrder})
+    </insert>
+
+    <!-- 批量插入答案块：知识更新按源重建时随条目一次写入。 -->
+    <insert id="insertBatch">
+        INSERT INTO knowledge_block (item_id, block_type, content, sort_order)
+        VALUES
+        <foreach collection="blocks" item="block" separator=",">
+            (#{block.itemId}, #{block.blockType}, #{block.content}, #{block.sortOrder})
+        </foreach>
+    </insert>
+</mapper>

@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/octoguide?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: ${OCTOGUIDE_DB_USERNAME}
+    password: ${OCTOGUIDE_DB_PASSWORD}
+
+octoguide:
+  llm:
+    # 兼容 Java 版新变量和旧 Node 版变量名；地址可填根地址、/v1 或完整接口地址。
+    base-url: ${OCTOGUIDE_LLM_BASE_URL:${OCTOGUIDE_LLM_URL:https://api.openai.com/v1}}
+    api-key: ${OCTOGUIDE_LLM_KEY:}
+    model: ${OCTOGUIDE_LLM_MODEL:gpt-4o-mini}
+    # 非流式调用（联网研究的网址建议等）的整次等待上限（秒）
+    timeout-seconds: ${OCTOGUIDE_LLM_TIMEOUT_SECONDS:30}
+    # 流式回答的空闲超时（秒）：两段数据之间的最大间隔；中转服务首字节慢时可调大
+    stream-idle-timeout-seconds: ${OCTOGUIDE_LLM_STREAM_IDLE_TIMEOUT_SECONDS:60}
+    # 流式回答的总时长上限（秒）：需小于 octoguide.chat.emitter-timeout-seconds
+    stream-total-timeout-seconds: ${OCTOGUIDE_LLM_STREAM_TOTAL_TIMEOUT_SECONDS:300}

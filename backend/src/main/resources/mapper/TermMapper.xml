@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.octoguide.knowledge.mapper.TermMapper">
+
+    <resultMap id="TermMap" type="com.octoguide.knowledge.domain.Term">
+        <id property="id" column="id"/>
+        <result property="english" column="english"/>
+        <result property="chinese" column="chinese"/>
+        <result property="description" column="description"/>
+        <result property="sortOrder" column="sort_order"/>
+    </resultMap>
+
+    <select id="findAllOrdered" resultMap="TermMap">
+        SELECT id, english, chinese, description, sort_order
+        FROM term
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM term
+    </select>
+</mapper>

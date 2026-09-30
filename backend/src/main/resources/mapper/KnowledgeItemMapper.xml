@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.octoguide.knowledge.mapper.KnowledgeItemMapper">
+
+    <resultMap id="KnowledgeItemMap" type="com.octoguide.knowledge.domain.KnowledgeItem">
+        <id property="id" column="item_id"/>
+        <result property="question" column="question"/>
+        <result property="tags" column="tags"/>
+        <result property="sourceType" column="source_type"/>
+        <result property="sourceUrl" column="source_url"/>
+        <result property="sourceTitle" column="source_title"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="autoEntry" column="auto_entry"/>
+        <result property="enabled" column="item_enabled"/>
+        <result property="updatedAt" column="updated_at"/>
+        <association property="category" javaType="com.octoguide.knowledge.domain.KnowledgeCategory">
+            <id property="id" column="category_id"/>
+            <result property="name" column="category_name"/>
+            <result property="icon" column="category_icon"/>
+            <result property="description" column="category_description"/>
+            <result property="sortOrder" column="category_sort_order"/>
+            <result property="enabled" column="category_enabled"/>
+        </association>
+    </resultMap>
+
+    <sql id="itemColumns">
+        i.id AS item_id,
+        i.category_id AS category_id,
+        i.question,
+        i.tags,
+        i.source_type,
+        i.source_url,
+        i.source_title,
+        i.source_id,
+        i.auto_entry,
+        i.enabled AS item_enabled,
+        i.updated_at,
+        c.name AS category_name,
+        c.icon AS category_icon,
+        c.description AS category_description,
+        c.sort_order AS category_sort_order,
+        c.enabled AS category_enabled
+    </sql>
+
+    <select id="findEnabledItems" resultMap="KnowledgeItemMap">
+        SELECT
+        <include refid="itemColumns"/>
+        FROM knowledge_item i
+        LEFT JOIN knowledge_category c ON c.id = i.category_id
+        WHERE i.enabled = TRUE
+        ORDER BY i.id ASC
+    </select>
+
+    <select id="findById" parameterType="string" resultMap="KnowledgeItemMap">
+        SELECT
+        <include refid="itemColumns"/>
+        FROM knowledge_item i
+        LEFT JOIN knowledge_category c ON c.id = i.category_id
+        WHERE i.id = #{id}
+    </select>
+
+    <select id="findIdByQuestion" parameterType="string" resultType="string">
+        SELECT id
+        FROM knowledge_item
+        WHERE question = #{question}
+        ORDER BY id ASC
+        LIMIT 1
+    </select>
+
+    <select id="countByAutoEntry" resultType="long">
+        SELECT COUNT(*)
+        FROM knowledge_item
+        WHERE auto_entry = #{autoEntry}
+    </select>
+
+    <select id="countByAutoEntryAndSourceType" resultType="long">
+        SELECT COUNT(*)
+        FROM knowledge_item
+        WHERE auto_entry = #{autoEntry}
+          AND source_type = #{sourceType}
+    </select>
+
+    <!-- 查询所有自动采集条目，用于合并时构建现有 ID 集合。 -->
+    <select id="findAllAutoEntries" resultMap="KnowledgeItemMap">
+        SELECT
+        <include refid="itemColumns"/>
+        FROM knowledge_item i
+        LEFT JOIN knowledge_category c ON c.id = i.category_id
+        WHERE i.auto_entry = TRUE
+        ORDER BY i.id ASC
+    </select>
+
+    <insert id="insert" parameterType="com.octoguide.knowledge.domain.KnowledgeItem">
+        INSERT INTO knowledge_item (
+            id, category_id, question, tags, source_type, source_url, source_title,
+            source_id, auto_entry, enabled
+        ) VALUES (
+            #{id}, #{category.id}, #{question}, #{tagsText}, #{sourceType}, #{sourceUrl}, #{sourceTitle},
+            #{sourceId}, #{autoEntry}, #{enabled}
+        )
+    </insert>
+
+    <!-- 批量插入条目：知识更新按源重建时一次写入全部新条目，减少逐条 INSERT 的网络往返。 -->
+    <insert id="insertBatch">
+        INSERT INTO knowledge_item (
+            id, category_id, question, tags, source_type, source_url, source_title,
+            source_id, auto_entry, enabled
+        ) VALUES
+        <foreach collection="items" item="item" separator=",">
+            (#{item.id}, #{item.category.id}, #{item.question}, #{item.tagsText}, #{item.sourceType},
+             #{item.sourceUrl}, #{item.sourceTitle}, #{item.sourceId}, #{item.autoEntry}, #{item.enabled})
+        </foreach>
+    </insert>
+
+    <!-- 并发记忆时依赖数据库唯一键原子去重，避免先查后插的竞态。 -->
+    <insert id="insertIgnore" parameterType="com.octoguide.knowledge.domain.KnowledgeItem">
+        INSERT INTO knowledge_item (
+            id, category_id, question, tags, source_type, source_url, source_title,
+            source_id, auto_entry, enabled
+        ) VALUES (
+            #{id}, #{category.id}, #{question}, #{tagsText}, #{sourceType}, #{sourceUrl}, #{sourceTitle},
+            #{sourceId}, #{autoEntry}, #{enabled}
+        ) ON DUPLICATE KEY UPDATE id = id
+    </insert>
+
+    <!-- 按数据源 ID 删除该源的所有自动条目，用于按源重建。 -->
+    <delete id="deleteBySourceId" parameterType="string">
+        DELETE FROM knowledge_item WHERE source_id = #{sourceId}
+    </delete>
+</mapper>

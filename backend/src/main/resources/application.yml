@@ -1,0 +1,57 @@
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: octoguide-backend
+  # IDEA 直接运行 main 方法时自动加载 application-local.yml。
+  # 部署环境可以通过 -Dspring.profiles.active 或 SPRING_PROFILES_ACTIVE 覆盖。
+  profiles:
+    default: local
+  datasource:
+    url: ${OCTOGUIDE_DB_URL:jdbc:mysql://localhost:3306/octoguide?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false}
+    username: ${OCTOGUIDE_DB_USERNAME:root}
+    # 数据库密码通过环境变量注入；未配置时保持为空并由 MySQL 返回明确错误。
+    password: ${OCTOGUIDE_DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+mybatis:
+  mapper-locations: classpath:/mapper/*.xml
+  type-aliases-package: com.octoguide.knowledge.domain
+  configuration:
+    map-underscore-to-camel-case: true
+
+octoguide:
+  knowledge:
+    update:
+      token: ${OCTOGUIDE_KNOWLEDGE_UPDATE_TOKEN:}
+  chat:
+    # 流式响应 emitter 超时（秒）：需覆盖联网研究最坏链路（多次 LLM 判断 + 多页面抓取 + 流式生成）
+    emitter-timeout-seconds: ${OCTOGUIDE_CHAT_EMITTER_TIMEOUT_SECONDS:300}
+    # 请求体硬上限：超限立即返回 error 事件，不进入聊天线程池，避免超长 payload 长时间占用执行线程
+    max-question-chars: ${OCTOGUIDE_CHAT_MAX_QUESTION_CHARS:4000}
+    max-history-messages: ${OCTOGUIDE_CHAT_MAX_HISTORY_MESSAGES:50}
+    max-history-message-chars: ${OCTOGUIDE_CHAT_MAX_HISTORY_MESSAGE_CHARS:20000}
+  web:
+    # 联网研究开关：关闭后 /api/status 的 webResearchEnabled 恒为 false
+    research-enabled: ${OCTOGUIDE_WEB_RESEARCH_ENABLED:true}
+  llm:
+    # 兼容 Java 版新变量和旧 Node 版变量名；地址可填根地址、/v1 或完整接口地址。
+    base-url: ${OCTOGUIDE_LLM_BASE_URL:${OCTOGUIDE_LLM_URL:https://api.openai.com/v1}}
+    api-key: ${OCTOGUIDE_LLM_KEY:}
+    model: ${OCTOGUIDE_LLM_MODEL:gpt-4o-mini}
+    # 非流式调用（如联网研究的网址建议）的整次等待上限
+    timeout-seconds: ${OCTOGUIDE_LLM_TIMEOUT_SECONDS:30}
+    # 流式回答的空闲超时：两段数据之间的最大间隔，超时才判定上游卡死（不是整段回答的总预算）
+    stream-idle-timeout-seconds: ${OCTOGUIDE_LLM_STREAM_IDLE_TIMEOUT_SECONDS:60}
+    # 流式回答的总时长上限：整段回答的硬上限，必须小于 octoguide.chat.emitter-timeout-seconds
+    stream-total-timeout-seconds: ${OCTOGUIDE_LLM_STREAM_TOTAL_TIMEOUT_SECONDS:300}
+    history-limit: ${OCTOGUIDE_LLM_HISTORY_LIMIT:12}
